@@ -1,0 +1,6 @@
+{
+  "name": "LinkFlow",
+  "description": "LinkFlow is an AI-driven integration platform that smoothly unites company systems, turning scattered signals into meaningful outcomes without custom scripts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
