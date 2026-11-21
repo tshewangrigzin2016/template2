@@ -96,7 +96,7 @@ export default function MobileDrawer({
         aria-hidden="true"
         data-testid="mobile-drawer-backdrop"
         onClick={onClose}
-        className={`lg:hidden fixed inset-0 z-40 transition-[background-color,backdrop-filter,visibility] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+        className={`fixed inset-0 z-40 transition-[background-color,backdrop-filter,visibility] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
           open
             ? 'bg-[#1f2a1d]/45 backdrop-blur-[8px] visible pointer-events-auto'
             : 'bg-[#1f2a1d]/0 backdrop-blur-[0px] invisible pointer-events-none'
@@ -112,7 +112,7 @@ export default function MobileDrawer({
         aria-label="Navigation menu"
         aria-hidden={!open}
         inert={!open}
-        className={`lg:hidden fixed top-0 right-0 bottom-0 z-50 w-[85%] max-w-sm bg-white/95 backdrop-blur-xl shadow-2xl will-change-transform transition-[transform,visibility] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+        className={`fixed top-0 right-0 bottom-0 z-50 w-[85%] max-w-sm bg-white/95 backdrop-blur-xl shadow-2xl will-change-transform transition-[transform,visibility] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
           open ? 'translate-x-0 visible' : 'translate-x-full invisible'
         }`}
       >
@@ -125,14 +125,14 @@ export default function MobileDrawer({
               ref={closeButtonRef}
               type="button"
               onClick={onClose}
-              aria-label="Close menu"
+              aria-label="Close navigation menu"
               className="flex items-center justify-center w-11 h-11 rounded-full bg-[#1f2a1d]/5 text-[#1f2a1d] hover:bg-[#1f2a1d]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f2a1d] focus-visible:ring-offset-2"
             >
               <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
-          <nav aria-label="Mobile navigation" className="flex flex-col mt-4">
+          <nav aria-label="Primary navigation" className="flex flex-col mt-4">
             {navLinks.map((link, i) => {
               const isActive = activeSection === link.id;
               return (

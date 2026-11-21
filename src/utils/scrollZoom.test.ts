@@ -91,32 +91,38 @@ test('computeNavbarMetrics and computeNavbarFrame center desktop items at scroll
   assert.equal(expanded.pillOpacity, 0);
 });
 
-test('computeNavbarMetrics handles mobile layout without center nav cleanly', () => {
-  const mobileLayout = {
-    containerWidth: 358,
+test('computeNavbarMetrics handles unified compact (logo + menu) layout on both wide desktop and mobile viewports', () => {
+  const desktopCompactLayout = {
+    containerWidth: 1360,
     leftX: 0,
-    leftWidth: 88,
+    leftWidth: 104,
     centerX: 0,
     centerWidth: 0,
-    rightX: 314,
+    rightX: 1316,
     rightWidth: 44,
-    compactGap: 20,
-    padLeft: 20,
+    compactGap: 22,
+    padLeft: 22,
     padRight: 6,
   };
 
-  const metrics = computeNavbarMetrics(mobileLayout);
+  const metrics = computeNavbarMetrics(desktopCompactLayout);
   const compact = computeNavbarFrame(metrics, 0, 1);
+  const mid = computeNavbarFrame(metrics, 0.5, 0.45);
   const expanded = computeNavbarFrame(metrics, 1, 0);
 
-  // Logo and menu button move close together near center
-  const visualLeft = mobileLayout.leftX + compact.leftTranslateX;
-  const visualRight = mobileLayout.rightX + compact.rightTranslateX;
-  assert.ok(Math.abs(visualRight - (visualLeft + mobileLayout.leftWidth) - 20) < 0.01);
-  assert.equal(compact.centerTranslateX, 0);
-  assert.ok(metrics.pillBaseWidth < mobileLayout.containerWidth);
+  // At scroll 0: pill is compact (~198px) and centered inside 1360px container
+  assert.equal(compact.pillWidth, 104 + 22 + 44 + 22 + 6);
+  assert.equal(compact.pillLeft, (1360 - compact.pillWidth) / 2);
+  const visualLeft = desktopCompactLayout.leftX + compact.leftTranslateX;
+  const visualRight = desktopCompactLayout.rightX + compact.rightTranslateX;
+  assert.ok(Math.abs(visualLeft - (compact.pillLeft + 22)) < 0.01);
+  assert.ok(Math.abs(visualRight - (visualLeft + 104) - 22) < 0.01);
 
-  // Resting state restores exact left/right edges
+  // Mid-scroll: pill widens cleanly between compact and full spread while hugging moving buttons
+  assert.ok(mid.pillWidth > compact.pillWidth && mid.pillWidth < expanded.pillWidth);
+  assert.ok(mid.pillLeft < compact.pillLeft && mid.pillLeft > expanded.pillLeft);
+
+  // At scroll 1: logo and menu button settle to exact resting edges (0px transform) and pill disappears
   assert.equal(expanded.leftTranslateX, 0);
   assert.equal(expanded.rightTranslateX, 0);
   assert.equal(expanded.pillOpacity, 0);

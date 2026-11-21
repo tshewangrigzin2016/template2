@@ -35,6 +35,8 @@ export interface NavbarFrameTransform {
   leftTranslateX: number;
   centerTranslateX: number;
   rightTranslateX: number;
+  pillLeft: number;
+  pillWidth: number;
   pillTranslateX: number;
   pillScaleX: number;
   pillOpacity: number;
@@ -211,6 +213,8 @@ export function computeNavbarFrame(
     leftTranslateX,
     centerTranslateX,
     rightTranslateX,
+    pillLeft: normalizeZero(currentPillLeft),
+    pillWidth: normalizeZero(currentPillWidth),
     pillTranslateX,
     pillScaleX,
     pillOpacity: clamp01(rawPillOpacity),

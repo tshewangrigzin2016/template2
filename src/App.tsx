@@ -37,11 +37,10 @@ export default function App() {
   const heroMediaWrapRef = useRef<HTMLDivElement>(null);
   const heroCopyRef = useRef<HTMLDivElement>(null);
 
-  // Header scroll-morph refs (all updated via GPU-composited transform & opacity without React re-renders)
+  // Header scroll-morph refs (updated directly in rAF without React re-renders)
   const headerInnerRef = useRef<HTMLDivElement>(null);
   const headerPillRef = useRef<HTMLDivElement>(null);
   const headerLogoRef = useRef<HTMLAnchorElement>(null);
-  const headerNavRef = useRef<HTMLElement>(null);
   const headerActionsRef = useRef<HTMLDivElement>(null);
   const mobileMenuSurfaceRef = useRef<HTMLSpanElement>(null);
   const navMetricsRef = useRef<NavbarMorphMetrics | null>(null);
@@ -64,7 +63,6 @@ export default function App() {
     const headerInner = headerInnerRef.current;
     const pillEl = headerPillRef.current;
     const logoEl = headerLogoRef.current;
-    const navEl = headerNavRef.current;
     const actionsEl = headerActionsRef.current;
     const mobileSurfaceEl = mobileMenuSurfaceRef.current;
     if (!track || !mediaWrap || !copyEl || !headerInner || !pillEl || !logoEl || !actionsEl) {
@@ -77,26 +75,22 @@ export default function App() {
       const containerWidth = headerInner.clientWidth;
       if (containerWidth <= 0) return;
 
-      const centerWidth = navEl ? navEl.offsetWidth : 0;
-      const hasDesktopNav = centerWidth > 0;
-      const isTabletOrDesktop = window.innerWidth >= 640;
+      const isWideViewport = window.innerWidth >= 640;
 
       const metrics = computeNavbarMetrics({
         containerWidth,
         leftX: logoEl.offsetLeft,
         leftWidth: logoEl.offsetWidth,
-        centerX: navEl ? navEl.offsetLeft : 0,
-        centerWidth,
+        centerX: 0,
+        centerWidth: 0,
         rightX: actionsEl.offsetLeft,
         rightWidth: actionsEl.offsetWidth,
-        compactGap: hasDesktopNav ? 24 : isTabletOrDesktop ? 22 : 18,
-        padLeft: hasDesktopNav ? 24 : 20,
-        padRight: hasDesktopNav ? 22 : 6,
+        compactGap: isWideViewport ? 24 : 18,
+        padLeft: isWideViewport ? 24 : 20,
+        padRight: 6,
       });
 
       navMetricsRef.current = metrics;
-      pillEl.style.left = `${metrics.pillBaseLeft.toFixed(2)}px`;
-      pillEl.style.width = `${metrics.pillBaseWidth.toFixed(2)}px`;
     };
 
     const applyZoomAndNavbar = () => {
@@ -119,15 +113,14 @@ export default function App() {
         const frame = computeNavbarFrame(metrics, state.navExpand, state.navPillOpacity);
 
         logoEl.style.transform = `translate3d(${frame.leftTranslateX.toFixed(2)}px, 0, 0)`;
-        if (navEl) {
-          navEl.style.transform = `translate3d(${frame.centerTranslateX.toFixed(2)}px, 0, 0)`;
-        }
         actionsEl.style.transform = `translate3d(${frame.rightTranslateX.toFixed(2)}px, 0, 0)`;
 
-        pillEl.style.transform = `translate3d(${frame.pillTranslateX.toFixed(2)}px, 0, 0) scaleX(${frame.pillScaleX.toFixed(4)})`;
+        // Use exact pillLeft & pillWidth on the layout-contained absolute backdrop so pill end caps stay perfectly circular across expansion
+        pillEl.style.transform = `translate3d(${frame.pillLeft.toFixed(2)}px, 0, 0)`;
+        pillEl.style.width = `${frame.pillWidth.toFixed(2)}px`;
         pillEl.style.opacity = frame.pillOpacity.toFixed(3);
         pillEl.setAttribute('data-pill-opacity', frame.pillOpacity.toFixed(3));
-        pillEl.setAttribute('data-pill-scale-x', frame.pillScaleX.toFixed(3));
+        pillEl.setAttribute('data-pill-width', frame.pillWidth.toFixed(1));
       }
 
       if (mobileSurfaceEl) {
@@ -255,22 +248,22 @@ export default function App() {
               className="pointer-events-none absolute inset-x-0 bottom-0 h-[44%] min-h-60 bg-gradient-to-t from-[#121c11]/90 via-[#162214]/58 to-transparent"
             />
 
-            {/* Top Navigation Bar — starts compact in a centered frosted pill, expands & dissolves synced with hero zoom-out */}
+            {/* Top Navigation Bar — tablet-style layout (Logo + Sign Me Up! + Enter + Menu on sm+, Logo + Menu on mobile) starting in a centered pill and expanding/dissolving on scroll */}
             <header className="relative z-30 w-full px-4 sm:px-6 md:px-10 py-5 sm:py-6">
               <div
                 ref={headerInnerRef}
                 data-testid="hero-header-inner"
                 className="relative w-full flex items-center justify-between gap-4"
               >
-                {/* Scroll-synced frosted pill backdrop enclosing all header controls at scroll=0, expanding and fading out on scroll */}
+                {/* Scroll-synced frosted pill backdrop enclosing header controls at scroll=0, expanding cleanly and fading out on scroll */}
                 <div
                   ref={headerPillRef}
                   aria-hidden="true"
                   data-testid="hero-nav-pill"
                   data-pill-opacity={reducedMotion ? '0.000' : '1.000'}
-                  data-pill-scale-x="1.000"
-                  className="pointer-events-none absolute -top-1.5 -bottom-1.5 z-0 rounded-full bg-white/88 backdrop-blur-md border border-[#1f2a1d]/10 shadow-[0_8px_28px_rgba(31,42,29,0.08)] origin-center will-change-[transform,opacity]"
-                  style={{ opacity: reducedMotion ? 0 : 1 }}
+                  data-pill-width="0"
+                  className="pointer-events-none absolute left-0 -top-1.5 -bottom-1.5 z-0 rounded-full bg-white/88 backdrop-blur-md border border-[#1f2a1d]/10 shadow-[0_8px_28px_rgba(31,42,29,0.08)] will-change-[transform,opacity]"
+                  style={{ opacity: reducedMotion ? 0 : 1, contain: 'layout style' }}
                 />
 
                 <a
@@ -286,40 +279,7 @@ export default function App() {
                   LinkFlow<span className="text-[10px] sm:text-xs align-super font-medium">™</span>
                 </a>
 
-                {/* Desktop Primary Navigation Links + Try it Live */}
-                <nav
-                  ref={headerNavRef}
-                  aria-label="Primary navigation"
-                  className="relative z-10 hidden lg:flex items-center gap-1 py-0.5 will-change-transform"
-                >
-                  {NAV_LINKS.map((link) => {
-                    const isCurrent = activeSection === link.id;
-                    return (
-                      <a
-                        key={link.id}
-                        href={link.href}
-                        aria-current={isCurrent ? 'location' : undefined}
-                        onClick={() => setActiveSection(link.id)}
-                        className={`text-sm px-3 py-2 rounded-full transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f2a1d] ${
-                          isCurrent
-                            ? 'font-semibold text-[#1f2a1d]'
-                            : 'font-medium text-[#3b4b38] hover:text-[#1f2a1d]'
-                        }`}
-                      >
-                        {link.label}
-                      </a>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    onClick={() => setModal({ type: 'try-live' })}
-                    className="ml-2 bg-[#1f2a1d] hover:bg-[#2a3827] text-white text-sm font-medium px-5 py-2.5 rounded-full transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f2a1d] focus-visible:ring-offset-2"
-                  >
-                    Try it Live
-                  </button>
-                </nav>
-
-                {/* Right Action Cluster + Mobile Hamburger */}
+                {/* Right Action Cluster (Sign Me Up! + Enter on sm+, Menu button on all viewports) */}
                 <div
                   ref={headerActionsRef}
                   className="relative z-10 flex items-center gap-3 sm:gap-5 text-[#1f2a1d] shrink-0 will-change-transform"
@@ -348,9 +308,9 @@ export default function App() {
                     aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                     aria-expanded={menuOpen}
                     aria-controls="mobile-nav-drawer"
-                    className="lg:hidden relative flex items-center justify-center w-11 h-11 rounded-full text-[#1f2a1d] hover:bg-[#1f2a1d]/[0.06] transition-colors duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f2a1d] focus-visible:ring-offset-2"
+                    className="relative flex items-center justify-center w-11 h-11 rounded-full text-[#1f2a1d] hover:bg-[#1f2a1d]/[0.06] transition-colors duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f2a1d] focus-visible:ring-offset-2"
                   >
-                    {/* Subtle standalone circular button surface fades in only as the outer navbar pill dissolves */}
+                    {/* Subtle standalone circular button surface fades in as the outer navbar pill dissolves */}
                     <span
                       ref={mobileMenuSurfaceRef}
                       aria-hidden="true"
